@@ -15,6 +15,43 @@ Target Environment
 - Ubuntu 14.04 LTS and higher LTS releases
 - Ubuntu 15.10 and higher
 
+Modes of Operation
+------------------
+
+### Generate User Data
+
+Produces on its output a User Data snippet suitable for deploying to an
+instance.
+
+### Upload Stage 1 script to S3 bucket
+
+Uses configured credentials to upload the Stage 1 script to an S3 bucket. This
+option will have the advantage of using a version-specific path in the bucket
+such that the version matches the user data and the Stage 2 runtime as well.
+
+Possible ideas for the URI pattern within the bucket are:
+
+/vortex-stage-1/YYYY-MM-DD-SHA1.(sh/py)
+
+### Apply user configuration
+
+This is what the Stage 1 bootstrap script calls. Vortex needs to be able to
+work out where to fetch the user configuration repo from (including any
+revision or verification information) from the configuration written out in
+Stage 0.
+
+Additional information may be passed to Vortex to influence the specialisation
+process, such as an environment name (e.g. "UAT" or "Production") or other
+parameters such as database connection details.
+
+The configuration should then be applied as per the user configuration repo.
+
+### Validate user configuration
+
+A sanity-check / preflight command that will perform checks on the user
+configuration and environment (e.g. contents of S3 bucket if possible), and
+optionally also display the sequence of steps taken when the process executes.
+
 Stage 0: User Data
 ------------------
 
