@@ -6,6 +6,19 @@ Target Environment
 
 - Amazon AWS only for now
 - Cloud-Init is required
+- Python 2.6+ or Python 3.3+
+
+We need to keep in mind other cloud providers while creating Vortex, but
+providers other than Amazon AWS are out of scope for the initial
+implementation. Cloud-Init is what we will use to invoke Vortex from freshly
+created instances and is compatible with various cloud providers, so will be a
+hard requirement.
+
+Python is our preferred implementation language, even though some glue code
+will need to be written in dash/bash scripting for the Stage 0/1 bootstrap. The
+lowest common denominator for our desired supported Linux distributions is
+Python 2.6. Python Six will be used to help with back/forwards compatibility
+with other Python versions including Python 3.3+.
 
 ### Distributions
 
