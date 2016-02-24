@@ -12,7 +12,7 @@ Overview
 | Amazon Linux 2014.09 | 2.6 | 3.4 (`python34`) | 1.8.0 |
 | CentOS 7.0 | 2.7 | 3.3 (SCL) | 1.3.0 |
 | Debian 8.0 (`jessie`) | 2.7 | 3.4 (`python3`) | 1.8.0 |
-| Ubuntu 14.04 LTS (`trusty`) | TODO | TODO | TODO |
+| Ubuntu 14.04 LTS (`trusty`) | 2.7 | 3.4 | 1.5.2 |
 | Ubuntu 15.10 (`wily`) | TODO | TODO | TODO |
 
 Minimum Python: 2.6.6 (Amazon Linux 2014.09)
@@ -85,3 +85,25 @@ Pre-requisite packages:
 | `gpg --version` | `1.4.18` (abbr) |
 
 Python 3.4 is available in the `python3` package.
+
+Ubuntu 14.04 LTS
+----------------
+
+Based on Debian.
+
+Pre-requisite packages:
+
+* `lsb-release` (**early** for `lsb_release`; pre-installed?)
+
+| Command | Result |
+| ------- | ------ |
+| `lsb_release -s -i` | `Ubuntu` |
+| `lsb_release -s -r` | `14.04` |
+| `lsb_release -s -c` | `trusty` |
+| `python -V` | `Python 2.7.6` |
+| `curl -V` | `7.35.0` (abbr) |
+| `wget -V` | `1.15` (abbr) |
+| `gpg --version` | `1.4.16` (abbr) |
+
+Python 3.4 is available in the `python3` package, but appears to be includes in
+standard installations.
