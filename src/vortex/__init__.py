@@ -18,3 +18,5 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 
+def stage2():
+    print("This is the Vortex Stage 2 entry function.")
