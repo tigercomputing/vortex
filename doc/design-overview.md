@@ -107,21 +107,19 @@ Stage 1: Static Bootstrap
 The first stage bootstrap script needs to use resources that are already
 present on the system in order to:
 
-1.  Install any components required to continue the process. This must be done
-    in an OS independent manner, e.g. using apt-get or yum depending on
-    context. It's envisioned that git will be needed as well as anything needed
-    for signature verification (gpg?).
+1.  Install the minimum required components to continue the process. This must
+    be done in an OS independent manner, e.g. using apt-get or yum depending on
+    context.
 
-2.  Obtain the Vortex runtime components. It is currently envisioned that this
-    will be done by means of a Git checkout but it should be possible to use
-    other mechanisms in future. The version of the downloaded components must
-    match the version specified in the Stage 0 bootstrap, and thus also match
-    the version of this Stage 1 bootstrap script as well.
+2.  Obtain the Vortex runtime components. This is done by downloading a Python
+    Egg archive from a remote web server. The version of the downloaded
+    components must match the version specified in the Stage 0 bootstrap, and
+    thus also match the version of this Stage 1 bootstrap script as well.
 
 3.  Verify that the downloaded Vortex components are authentic by checking a
-    digital signature. When using git this will be done by checking the
-    signature on a signed Git tag but other mechanisms may be implemented in
-    future.
+    digital signature. This should be done by downloading a detatched GPG
+    signature residing next to the archive, and verifying it against a
+    well-known key.
 
 4.  Hand over control to the Vortex runtime components.
 
@@ -134,16 +132,20 @@ verified.
 
 The Vortex runtime must now:
 
-1. Obtain the user configuration to be applied based on the information written
+1. Validate the running environment and install any missing components that may
+   be required in subsequent tasks, for example any missing Python modules,
+   system management tools and Git.
+
+2. Obtain the user configuration to be applied based on the information written
    to the parameter file during the Stage 0 bootstrap. The first available
    method for doing this will be using Git.
 
-2. Optionally verify the validity of the obtained configuration if requested in
+3. Optionally verify the validity of the obtained configuration if requested in
    the Stage 0 bootstrap. Signed Git tags will be the initial means for doing
    this, but it must also be possible to use Git branches or commit IDs which
    are not signed.
 
-3. Read the configuration file provided in the configuration repo and carry out
+4. Read the configuration file provided in the configuration repo and carry out
    the actions listed within.
 
 Stage 3: User Configuration
