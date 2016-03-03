@@ -123,11 +123,20 @@ def execute_vortex(filepath):
 
     # Import the module into the current process
     sys.path.insert(1, filepath)
-    module = import_module(module_name)
+    try:
+        module = import_module(module_name)
+    except ImportError:
+        die("Failed to import module '{mod}' from Egg at {egg}".format(
+            mod=module_name, egg=filepath))
 
     # Locate the entry point
-    fn = getattr(module, fn_name)
+    try:
+        fn = getattr(module, fn_name)
+    except AttributeError:
+        die("Failed to locate entry point '{ep}' in module '{mod}'".format(
+            ep=fn_name, mod=module_name))
 
+    # Try to call into the configured entry point
     if isinstance(fn, collections.Callable):
         fn()
     else:
