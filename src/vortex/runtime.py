@@ -17,14 +17,8 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import vortex.environment  # noqa
-
-from vortex.environment import check_modules
+import six
 
 
-def stage2():
-    # Make sure we have all the modules we require
-    check_modules(install=True)
-
-    import vortex.runtime
-    vortex.runtime.main()
+def main():
+    print("This is the Vortex Stage 2 entry function.")
