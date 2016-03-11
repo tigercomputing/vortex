@@ -18,7 +18,9 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import collections
+import os
 import platform
+import subprocess
 import sys
 
 try:
@@ -75,8 +77,76 @@ def _check_prerequisites():
 _check_prerequisites()
 
 # Get some basic information about the running system for later use
-(_dist_name, _dist_ver, _dist_id) = platform.linux_distribution(
+(_dist_name_, _dist_ver, _dist_id) = platform.linux_distribution(
     full_distribution_name=0)
+_dist_name = _dist_name_.lower()
+
+
+def __runcmd(args, env=None):
+    if env is None:
+        env = dict()
+
+    # Copy in some basic environment variables from our environment, but
+    # otherwise run with only the variables given.
+    for var in ['PATH', 'TERM']:
+        env.setdefault(var, os.environ.get(var))
+
+    with open(os.devnull, 'r') as devnull:
+        p = subprocess.Popen(
+            args,
+            stdin=devnull, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            close_fds=True, env=env)
+        output = p.communicate()[0]
+
+    return (p.returncode, output)
+
+
+def __apt_install(pkgs):
+    """
+    Install package using apt-get, trying hard to get non-interactive behaviour
+    during the installation.
+    """
+    # Prevent apt-listchanges from doing anything, prevent debconf from asking
+    # any questions. Either of these could block waiting for input from the
+    # user.
+    env = {
+        'APT_LISTCHANGES_FRONTEND': 'none',
+        'DEBIAN_FRONTEND': 'noninteractive',
+    }
+
+    args = [
+        '/usr/bin/apt-get',
+        '-q', '-y',
+        '-o', 'DPkg::options::=--force-confdef',
+        '-o', 'DPkg::Options::=--force-confold',
+        'install',
+    ]
+    args.extend(pkgs)
+
+    (ret, out) = __runcmd(args, env)
+
+    if ret != 0:
+        raise EnvironmentException(
+            "apt-get install failed: {ret}".format(ret=ret), out)
+
+
+def __yum_install(pkgs):
+    """
+    Install package using yum, trying hard to get non-interactive behaviour
+    during the installation.
+    """
+    args = [
+        '/usr/bin/yum',
+        '-d', '0', '-e', '0', '-y',
+        'install',
+    ]
+    args.extend(pkgs)
+
+    (ret, out) = __runcmd(args)
+
+    if ret != 0:
+        raise EnvironmentException(
+            "yum install failed: {ret}".format(ret=ret), out)
 
 
 def install_package(package, name=None):
@@ -111,8 +181,15 @@ def install_package(package, name=None):
         # Turn a single string into a list
         package = [package]
 
-    # FIXME TODO XXX: implement this code
-    raise NotImplementedError()
+    # Hand over the package list to the package manager function
+    if _dist_name in ['debian', 'ubuntu']:
+        __apt_install(package)
+    elif _dist_name in ['centos', 'redhat']:
+        __yum_install(package)
+    else:
+        raise EnvironmentException(
+            "Don't know how to install packages on {dist}".format(
+                dist=_dist_name))
 
 
 def check_modules(install=False):
@@ -146,6 +223,7 @@ def check_modules(install=False):
 
     # Now try to install the missing modules
     for module in missing:
+        # FIXME: provide feedback that we're doing something
         install_package(_REQUIRE_MODULES[module], module)
 
     # Re-check all the modules
