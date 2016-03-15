@@ -23,15 +23,7 @@ import platform
 import subprocess
 import sys
 
-try:
-    from importlib import import_module
-except ImportError:
-    # for Python 2.6
-    def import_module(name, package=None):
-        if name.startswith('.'):
-            raise NotImplementedError('Relative import not supported')
-        __import__(name)
-        return sys.modules[name]
+from vortex.compat import import_module
 
 
 _PY3 = sys.version_info[0] == 3
