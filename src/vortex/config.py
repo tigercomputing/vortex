@@ -18,6 +18,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import os
+import six
 
 from six import PY3
 from six.moves.configparser import SafeConfigParser
@@ -53,18 +54,46 @@ class VortexConfiguration(SafeConfigParser, object):
         # Remember the filename for later (single loading)
         self.__filename = filename
 
-        self._validate_config()
+    def check_required_options(self, required):
+        """
+        Check whether required configuration options are present.
 
-    def _validate_config(self):
-        required = [
-            ('bootstrap', 'source'),
-        ]
-
+        Given a list of (section, option) tuplies, checks that each of those
+        options is present in the configuration. Raises a ConfigurationError if
+        any of the required options are not present.
+        """
         for (section, option) in required:
             if not self.has_option(section, option):
                 raise ConfigurationError(
                     "{ini}: missing required option [{sec}].{opt}.".format(
                         ini=self.__filename, sec=section, opt=option))
+
+    def set_default(self, section, option, value):
+        if self.has_option(section, option):
+            return
+
+        if not self.has_section(section):
+            self.add_section(section)
+
+        self.set(section, option, value)
+
+    def absorb(self, target, section, required=None, defaults=None):
+        # Check that any required options are present
+        if required is None:
+            required = []
+        self.check_required_options([(section, x) for x in required])
+
+        # Set any requested default values
+        if defaults is None:
+            defaults = {}
+        for (option, value) in six.iteritems(defaults):
+            self.set_default(section, option, value)
+
+        # Now copy the configuration into our instance
+        for option in required + list(defaults.keys()):
+            value = self.get(section, option)
+            setattr(target, option, value)
+
 
 # Configuration file path
 VORTEX_INI = '/etc/vortex.ini'
