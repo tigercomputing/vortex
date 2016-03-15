@@ -20,6 +20,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import os
 import os.path
 
+from vortex.acquirer import Acquirer
 from vortex.config import cfg
 from vortex.runtime import runtime
 
@@ -95,6 +96,13 @@ class Payload(object):
     def acquire(self):
         # FIXME TODO
         print("Acquiring payload {name}".format(name=self.name))
+
+        acquirer = Acquirer.factory(
+            self.acquire_method,
+            "payload:{name}:{method}".format(
+                name=self.name, method=self.acquire_method))
+
+        acquirer.acquire_into(self.directory)
 
     def deploy(self):
         # FIXME TODO
