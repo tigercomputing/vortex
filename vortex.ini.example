@@ -1,11 +1,13 @@
-[application]
-fetch_method=git
-environment=production
+[payload:myapp]
+acquire_method=git
+;environment=production
 
-[git]
+[payload:myapp:git]
 repository=http://git.example.com/myapp.git
-revision=master
+;revision=master
 
 [bootstrap]
 source=http://some-bucket/vortex/vortex-0.0.1-py2.7.egg
 ;entry=vortex:stage2
+
+; vim:ft=dosini

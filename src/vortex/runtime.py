@@ -58,10 +58,25 @@ class Runtime(object):
         """
         Main runtime entry point.
 
-        Obtains and deploys the configured payload.
+        Obtains and deploys the configured payloads.
         """
         # FIXME
         print("This is the Vortex Runtime run() method.")
+
+        # Avoid circular module dependency
+        from vortex.payload import Payload
+
+        # Obtain all configured payloads
+        payloads = Payload.configured_payloads()
+
+        # Acquire all the payload data first, then deploy them all as a second
+        # step. This means we don't deploy anything if any of the payloads fail
+        # to be acquired.
+        for payload in payloads:
+            payload.acquire()
+
+        for payload in payloads:
+            payload.deploy()
 
 #: Singleton instance of the Vortex Runtime class
 runtime = Runtime()
