@@ -17,8 +17,54 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import six
+import atexit
+import shutil
+import tempfile
 
 
-def main():
-    print("This is the Vortex Stage 2 entry function.")
+class Runtime(object):
+    @property
+    def tmpdir(self):
+        """
+        Obtain the path to a temporary directory.
+
+        This directory will be shared by all Vortex components, so the contents
+        should be named in such a way as to avoid conflicts with other vortex
+        modules. The directory will be removed when the Python interpreter
+        terminates.
+
+        Note that this is a different directory to that used by the bootstrap
+        module: we make no attempt to inherit the same directory, so we'll end
+        up with two "vortex-" temporary directories if we are called from the
+        bootstrapper. They will both be cleaned up at exit.
+        """
+        # If we've already created a tmpdir, return it
+        try:
+            return self.__tmpdir
+        except AttributeError:
+            pass
+
+        # Create a new temporary directory
+        self.__tmpdir = tempfile.mkdtemp(prefix='vortex-')
+
+        # Make sure it's removed at exit
+        @atexit.register
+        def _cleanup_tmpdir():
+            shutil.rmtree(self.__tmpdir)
+
+        return self.__tmpdir
+
+    def run(self):
+        """
+        Main runtime entry point.
+
+        Obtains and deploys the configured payload.
+        """
+        # FIXME
+        print("This is the Vortex Runtime run() method.")
+
+#: Singleton instance of the Vortex Runtime class
+runtime = Runtime()
+
+if __name__ == "__main__":
+    runtime.run()

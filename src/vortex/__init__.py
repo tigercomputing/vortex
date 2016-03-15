@@ -17,8 +17,7 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import vortex.environment  # noqa
-
+# NB important side-effect: this import runs pre-requisite checks.
 from vortex.environment import check_modules
 
 
@@ -26,5 +25,7 @@ def stage2():
     # Make sure we have all the modules we require
     check_modules(install=True)
 
-    import vortex.runtime
-    vortex.runtime.main()
+    # Now that we have the required modules, we can import our main runtime and
+    # get started
+    from vortex.runtime import runtime
+    runtime.run()
