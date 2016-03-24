@@ -18,6 +18,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import os
+import os.path
 import six
 
 from six import PY3
@@ -99,5 +100,11 @@ class VortexConfiguration(SafeConfigParser, object):
 VORTEX_INI = '/etc/vortex.ini'
 VORTEX_INI = os.environ.get('VORTEX_INI', VORTEX_INI)
 
+# Does the configuration file exist?
+if os.path.exists(VORTEX_INI):
+    filename = VORTEX_INI
+else:
+    filename = None
+
 # Load the configuration
-cfg = VortexConfiguration(VORTEX_INI)
+cfg = VortexConfiguration(filename)
