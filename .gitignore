@@ -17,3 +17,6 @@
 
 # Python code coverage metadata
 /.coverage
+
+# Sphinx build directory
+/sphinx/_build/
