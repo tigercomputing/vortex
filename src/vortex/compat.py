@@ -14,6 +14,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Compatibility functions and wrappers.
+
+.. py:function:: import_module(name[, package=None])
+
+   On Python >= 2.7, this is simply a re-exported version of
+   :func:`importlib.import_module`.
+
+   On Python 2.6, where :mod:`importlib` does not exist, this provides a very
+   simple wrapper around :func:`__import__` that doesn't support relative
+   import. The ``package`` argument is ignored, and a
+   :exc:`NotImplementedError` is raised if the ``name`` argument starts with a
+   dot (``.``).
+"""
 
 from __future__ import absolute_import, print_function, unicode_literals
 

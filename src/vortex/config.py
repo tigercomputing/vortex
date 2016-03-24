@@ -14,6 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Configuration file parsing and helpers.
+"""
 
 from __future__ import absolute_import, print_function, unicode_literals
 
@@ -26,10 +29,19 @@ from six.moves.configparser import SafeConfigParser
 
 
 class ConfigurationError(Exception):
-    pass
+    """
+    Raised when an issue is detected with the Vortex configuration.
+    """
 
 
 class VortexConfiguration(SafeConfigParser, object):
+    """
+    Sub-class of the Python :class:`SafeConfigParser` to help read Vortex
+    configuration files.
+
+    If ``filename`` is not ``None``, the constructor calls :meth:`read_config`
+    with the given argument.
+    """
     def __init__(self, filename=None):
         super(VortexConfiguration, self).__init__()
         self.__filename = None
@@ -38,6 +50,14 @@ class VortexConfiguration(SafeConfigParser, object):
             self.read_config(filename)
 
     def read_config(self, filename):
+        """
+        Attempts to load a configuration file.
+
+        This is a wrapper around :meth:`read_file` (on Python 3+) or
+        :meth:`readfp` (on Python 2.x). This method ensures only one
+        configuration file is read, and throws a :exc:`ConfigurationError` if
+        called multiple times.
+        """
         # Check that this isn't a 2nd attempt to load a configuration
         if self.__filename:
             raise ConfigurationError(
@@ -59,9 +79,10 @@ class VortexConfiguration(SafeConfigParser, object):
         """
         Check whether required configuration options are present.
 
-        Given a list of (section, option) tuplies, checks that each of those
-        options is present in the configuration. Raises a ConfigurationError if
-        any of the required options are not present.
+        Given a list of ``(section, option)`` tuples, checks that each of those
+        options is present in the configuration. Raises a
+        :exc:`ConfigurationError` if any of the required options are not
+        present in the loaded configuration.
         """
         for (section, option) in required:
             if not self.has_option(section, option):
@@ -70,6 +91,13 @@ class VortexConfiguration(SafeConfigParser, object):
                         ini=self.__filename, sec=section, opt=option))
 
     def set_default(self, section, option, value):
+        """
+        Sets default values for options in a given configuration section.
+
+        If the option is already set in the given section, this method has no
+        effect. Otherwise, if the section does not exist it is created, and the
+        option is set to the requested value.
+        """
         if self.has_option(section, option):
             return
 
@@ -79,6 +107,22 @@ class VortexConfiguration(SafeConfigParser, object):
         self.set(section, option, value)
 
     def absorb(self, target, section, required=None, defaults=None):
+        """
+        Helper used for absorbing configuration values into Python objects.
+
+        If ``required`` is set, the given ``section`` is checked to ensure that
+        all the options in the ``required`` list are present (using
+        :meth:`check_required_options`). If set, ``required`` must be an
+        iterable (e.g. a list) of strings.
+
+        Next, if ``defaults`` is set, any options in ``defaults`` that don't
+        exist in the configuration section are added to the configuration. If
+        set, ``defaults`` must be a dict.
+
+        Finally, any option named in either ``required`` or ``defaults`` is
+        used to lookup values from the configuration. The options so-named are
+        then set on the ``target`` object using :func:`setattr`.
+        """
         # Check that any required options are present
         if required is None:
             required = []
@@ -96,15 +140,16 @@ class VortexConfiguration(SafeConfigParser, object):
             setattr(target, option, value)
 
 
-# Configuration file path
+#: Path to Vortex configuration file. Can be overridden using the
+#: ``VORTEX_INI`` environment variable.
 VORTEX_INI = '/etc/vortex.ini'
 VORTEX_INI = os.environ.get('VORTEX_INI', VORTEX_INI)
 
-# Does the configuration file exist?
-if os.path.exists(VORTEX_INI):
-    filename = VORTEX_INI
-else:
-    filename = None
+#: Singleton :class:`VortexConfiguration` instance. Provides a simple means to
+#: access the configuration from any module by using
+#: ``from vortex.config import cfg``.
+cfg = VortexConfiguration()
 
-# Load the configuration
-cfg = VortexConfiguration(filename)
+# If the configuration file exists, read the configuration into our singleton
+if os.path.exists(VORTEX_INI):
+    cfg.read_config(VORTEX_INI)
