@@ -24,15 +24,40 @@ from vortex.compat import import_module
 
 
 class AcquisitionError(Exception):
-    pass
+    """
+    Problems raised during payload acquisition.
+    """
 
 
 @six.add_metaclass(abc.ABCMeta)
 class Acquirer(object):
+    """
+    Abstract base class for acquisition methods.
+
+    Various factory methods are provided in order to register and locate
+    concrete sub-classes.
+    """
     __registered = {}
 
     @classmethod
     def factory(cls, method, section):
+        """
+        Find and configure an acquirer.
+
+        Locates a registered sub-class of :class:`Acquirer` by the given
+        `method` name, then returns an instance of it configured using the
+        given `section`.
+
+        The `method` argument is expected to be a Python module name
+        containing a sub-class of :class:`Acquirer`. If the method name does
+        not contain any dots (``.``), the prefix ``vortex.acquirer.`` is
+        prepended. For example, the acquirer method ``git`` causes the
+        ``vortex.acquirer.git`` module to be loaded.
+
+        The located class is then instantiated with the given `section` passed
+        to the constructor as its only argument. The resulting object is
+        returned.
+        """
         # Turn the method name into a module name
         if '.' in method:
             module = method
@@ -66,6 +91,22 @@ class Acquirer(object):
 
     @classmethod
     def register(cls, acquirer):
+        """
+        Function used to register a new :class:`Acquirer` sub-class.
+
+        This is expected to be used as a decorator on classes implementing an
+        acquisition method. For example::
+
+            @Acquirer.register
+            class MyAcquirer(Acquirer):
+                ...
+
+        Acquirer sub-classes are registered using their containing module name
+        as a lookup key; the class name is ignored. The module name alone is
+        used to look up sub-classes in the :meth:`factory` method.
+
+        .. note:: Only one Acquirer sub-class may be registered per module.
+        """
         module = acquirer.__module__
 
         if module in cls.__registered:
@@ -83,8 +124,28 @@ class Acquirer(object):
 
     @abc.abstractmethod
     def configure(self):
-        pass
+        """
+        Configure this acquirer based on settings from the vortex
+        configuration.
+
+        It is intended that sub-classes use this method in order to call
+        :meth:`vortex.config.VortexConfiguration.absorb` with arguments that
+        are appropriate for the particular implementation.
+
+        .. note:: This is an *abstract method* and **must** be implemented by
+            sub-classes.
+        """
 
     @abc.abstractmethod
     def acquire_into(self, directory):
-        pass
+        """
+        Perform the resource acquisition into the given directory.
+
+        Sub-classes should implement the actual resource acquisition in this
+        method. They should use the configuration obtained in :meth:`configure`
+        and do what they need to do such that the given `directory` is
+        populated with data from the configured source.
+
+        .. note:: This is an *abstract method* and **must** be implemented by
+            sub-classes.
+        """
