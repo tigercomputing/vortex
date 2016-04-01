@@ -18,10 +18,21 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import atexit
+import logging
 import shutil
 import tempfile
+import vortex.logsetup
 
+from vortex.config import cfg
 from vortex.utils import cached_property
+
+
+if __name__ == "__main__":
+    # This is ugly, but I can't think of a sensible way of finding this value
+    # out if we're just being "run" by Python.
+    logger = logging.getLogger('vortex.runtime')
+else:
+    logger = logging.getLogger(__name__)
 
 
 class Runtime(object):
@@ -55,11 +66,12 @@ class Runtime(object):
         Main runtime entry point.
 
         Obtains and deploys the configured payloads.
-
-        .. todo:: Use logging framework.
         """
-        # FIXME: use logging
-        print("This is the Vortex Runtime run() method.")
+        # First, configure logging
+        vortex.logsetup.configure(cfg)
+
+        # Tell the user something is happening
+        logger.info("Vortex runtime is starting up.")
 
         # Avoid circular module dependency
         from vortex.payload import Payload

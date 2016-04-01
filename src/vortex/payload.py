@@ -17,6 +17,7 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+import logging
 import os
 import os.path
 
@@ -24,6 +25,9 @@ from vortex.acquirer import Acquirer
 from vortex.config import cfg
 from vortex.runtime import runtime
 from vortex.utils import cached_property
+
+
+logger = logging.getLogger(__name__)
 
 
 class Payload(object):
@@ -150,11 +154,8 @@ class Payload(object):
 
         Uses the configured :attr:`acquirer` to obtain the payload into the
         holding :attr:`directory`.
-
-        .. todo:: Use vortex logging module once it appears.
         """
-        # TODO: use logging for this
-        print("Acquiring payload {name}".format(name=self.name))
+        logger.info("Acquiring payload {name}".format(name=self.name))
 
         self.acquirer.acquire_into(self.directory)
 
@@ -163,7 +164,5 @@ class Payload(object):
         Run the payload's deployment scripts in order to deploy it.
 
         .. todo:: Make this actually do something.
-        .. todo:: Use vortex logging module once it appears.
         """
-        # TODO: use logging for this
-        print("Deploying payload {name}".format(name=self.name))
+        logger.info("Deploying payload {name}".format(name=self.name))

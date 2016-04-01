@@ -31,8 +31,14 @@ ec2-instance-metadata.html
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+import logging
+import vortex.logsetup
+
 # NB important side-effect: this import runs pre-requisite checks.
 from vortex.environment import check_modules
+
+
+logger = logging.getLogger(__name__)
 
 
 def stage2():
@@ -45,6 +51,11 @@ def stage2():
     ``install=True``), then starts the deployment process by calling
     :meth:`vortex.runtime.Runtime.run`.
     """
+    # We can't set up logging properly until we can read our configuration,
+    # which we can't do until we have Six installed. Let's just tweak some
+    # defaults so the user can see *something* before we get that far.
+    vortex.logsetup.configure(None)
+
     # Make sure we have all the modules we require
     check_modules(install=True)
 

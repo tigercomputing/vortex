@@ -17,8 +17,13 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+import logging
+
 from vortex.acquirer import Acquirer
 from vortex.config import cfg
+
+
+logger = logging.getLogger(__name__)
 
 
 @Acquirer.register
@@ -65,5 +70,5 @@ class GitAcquirer(Acquirer):
 
         See :meth:`vortex.acquirer.Acquirer.acquire_into`.
         """
-        print("Acquiring Git repo {repo} rev {rev} into {dir}".format(
+        logger.info("Acquiring Git repo {repo} rev {rev} into {dir}".format(
             dir=directory, repo=self.repository, rev=self.revision))
