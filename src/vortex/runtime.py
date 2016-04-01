@@ -21,9 +21,11 @@ import atexit
 import shutil
 import tempfile
 
+from vortex.utils import cached_property
+
 
 class Runtime(object):
-    @property
+    @cached_property
     def tmpdir(self):
         """
         Obtain the path to a temporary directory.
@@ -38,21 +40,15 @@ class Runtime(object):
         up with two "vortex-" temporary directories if we are called from the
         bootstrapper. They will both be cleaned up at exit.
         """
-        # If we've already created a tmpdir, return it
-        try:
-            return self.__tmpdir
-        except AttributeError:
-            pass
-
         # Create a new temporary directory
-        self.__tmpdir = tempfile.mkdtemp(prefix='vortex-')
+        tmpdir = tempfile.mkdtemp(prefix='vortex-')
 
         # Make sure it's removed at exit
         @atexit.register
         def _cleanup_tmpdir():
-            shutil.rmtree(self.__tmpdir)
+            shutil.rmtree(tmpdir)
 
-        return self.__tmpdir
+        return tmpdir
 
     def run(self):
         """
