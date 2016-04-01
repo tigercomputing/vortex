@@ -23,9 +23,36 @@ import os.path
 from vortex.acquirer import Acquirer
 from vortex.config import cfg
 from vortex.runtime import runtime
+from vortex.utils import cached_property
 
 
 class Payload(object):
+    """
+    Represents a configured application payload.
+
+    Payloads are made up of groups of files obtained using a
+    :class:`vortex.acquirer.Acquirer`, then deployed to the local system
+    according to rules defined within the payload itself.
+
+    Payloads are configured in the :class:`vortex.config.VortexConfiguration`
+    file as sections named ``payload:_name_``.
+
+    The following configuration options are *required* for each defined
+    payload:
+
+        ``acquire_method``
+           The method used to acquire the payload. This value is passed
+           verbatim into the :meth:`vortex.acquirer.Acquirer.factory` method's
+           ``method`` parameter.
+
+    The following configuration options are *optional*:
+
+        ``environment`` = ``development``
+           Parameter passed to the payload deployment process. This can be used
+           to configure the payload for a particular environment, for example
+           using different settings for a development mode compared to a
+           production environment.
+    """
     @classmethod
     def configured_payloads(cls):
         """
@@ -33,7 +60,11 @@ class Payload(object):
 
         Returns a list of Payload objects, one for each configured payload in
         the configuration file. The ordering from the configuration file is
-        preserved if we are running a supported Python version (2.7+)
+        preserved if we are running a supported Python version (2.7+).
+
+        This method iterates the configuration searching for sections starting
+        ``payload:``, and returns :class:`Payload` objects for each found
+        section.
         """
         try:
             return cls.__configured_payloads
@@ -81,8 +112,28 @@ class Payload(object):
         # Validate the configuration and absorb the values into this object
         cfg.absorb(self, 'payload:' + self.name, required, defaults)
 
+    @cached_property
+    def acquirer(self):
+        """
+        :class:`vortex.acquirer.Acquirer` object used to acquire the payload.
+        """
+        section = "payload:{name}:{method}".format(
+            name=self.name, method=self.acquire_method)
+
+        # Obtain an acquirer instance for the configured acquisition method
+        return Acquirer.factory(self.acquire_method, section)
+
     @property
     def directory(self):
+        """
+        Path to a temporary holding directory into which the payload will be
+        acquired.
+
+        The directory is guaranteed *not* to exist until :meth:`acquire` is
+        called. The parent directory *is* guaranteed to exist, however, so a
+        simple :func:`os.mkdir` with the obtained path will be sufficient to
+        create the payload directory.
+        """
         # We'll put all our payloads into a directory within our temporary
         # directory, so figure out its path and make sure the directory exists
         # before we use it.
@@ -94,16 +145,25 @@ class Payload(object):
         return os.path.join(payloads, self.name)
 
     def acquire(self):
-        # FIXME TODO
+        """
+        Acquire the payload data from its configured source.
+
+        Uses the configured :attr:`acquirer` to obtain the payload into the
+        holding :attr:`directory`.
+
+        .. todo:: Use vortex logging module once it appears.
+        """
+        # TODO: use logging for this
         print("Acquiring payload {name}".format(name=self.name))
 
-        acquirer = Acquirer.factory(
-            self.acquire_method,
-            "payload:{name}:{method}".format(
-                name=self.name, method=self.acquire_method))
-
-        acquirer.acquire_into(self.directory)
+        self.acquirer.acquire_into(self.directory)
 
     def deploy(self):
-        # FIXME TODO
+        """
+        Run the payload's deployment scripts in order to deploy it.
+
+        .. todo:: Make this actually do something.
+        .. todo:: Use vortex logging module once it appears.
+        """
+        # TODO: use logging for this
         print("Deploying payload {name}".format(name=self.name))
