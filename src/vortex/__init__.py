@@ -23,8 +23,8 @@ field using `Cloud-Init`_. From there it configures your instance according to
 your configuration (for example using `Puppet`_).
 
 .. _Amazon AWS: http://aws.amazon.com/
-.. _User Data:
-    http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
+.. _User Data: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/\
+ec2-instance-metadata.html
 .. _Cloud-Init: https://launchpad.net/cloud-init
 .. _Puppet: https://puppetlabs.com/
 """
