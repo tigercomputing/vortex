@@ -13,6 +13,7 @@ Contents:
 
    introduction
    api
+   todo
 
 
 Indices and tables
