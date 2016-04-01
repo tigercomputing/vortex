@@ -47,11 +47,6 @@ The following configuration options are *optional*:
 Some of the code in this file is made up of simpler / stripped
 re-implementations of code found elsewhere in Vortex, or even from parts of
 :mod:`six`.
-
-.. note:: A bug in Sphinx (1641_) prevents some of the members in this module
-          from having their documentation generated.
-
-.. _1641: https://github.com/sphinx-doc/sphinx/issues/1641
 """
 
 from __future__ import absolute_import, print_function, unicode_literals
@@ -64,6 +59,15 @@ import os.path
 import shutil
 import sys
 import tempfile
+
+# Workaround for Sphinx bug 1641. Without this kind of thing, Sphinx barfs when
+# using print as a function. https://github.com/sphinx-doc/sphinx/issues/1641
+try:
+    import builtins
+    print_ = getattr(builtins, 'print')
+except ImportError:
+    import __builtin__
+    print_ = getattr(__builtin__, 'print')
 
 # Imports taking care of Python 2.x => 3.x renames
 try:
@@ -122,7 +126,7 @@ def die(message, exit=1):
     """
     Simple wrapper to print to ``stderr`` and exit with a failure return.
     """
-    print(message, file=sys.stderr)
+    print_(message, file=sys.stderr)
     sys.exit(exit)
 
 
