@@ -55,8 +55,10 @@ class Runtime(object):
         Main runtime entry point.
 
         Obtains and deploys the configured payloads.
+
+        .. todo:: Use logging framework.
         """
-        # FIXME
+        # FIXME: use logging
         print("This is the Vortex Runtime run() method.")
 
         # Avoid circular module dependency
