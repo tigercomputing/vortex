@@ -92,7 +92,7 @@ _check_prerequisites()
 _dist_name = _dist_name_.lower()
 
 
-def runcmd(args, env=None):
+def runcmd(args, env=None, cwd=None):
     """
     Simple wrapper around :class:`subprocess.Popen`.
 
@@ -135,7 +135,7 @@ def runcmd(args, env=None):
         p = subprocess.Popen(
             args,
             stdin=devnull, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            close_fds=True, env=env)
+            close_fds=True, cwd=cwd, env=env)
         output = p.communicate()[0]
 
     return (p.returncode, output)
