@@ -17,6 +17,8 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+from vortex.compat import shell_quote
+
 
 # class cached_property is
 # Copyright (c) Django Software Foundation and individual contributors.
@@ -44,3 +46,15 @@ class cached_property(object):
             return self
         res = instance.__dict__[self.name] = self.func(instance)
         return res
+
+
+def list_to_cmdline(seq):
+    """
+    Join a list of command-line arguments together into a string with
+    appropriate quoting.
+
+    This can be used to turn an argument list into a string suitable for
+    logging. Shell quoting is used where required in order to make command
+    components distinct.
+    """
+    return ' '.join(shell_quote(x) for x in seq)
