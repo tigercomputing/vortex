@@ -92,7 +92,28 @@ _check_prerequisites()
 _dist_name = _dist_name_.lower()
 
 
-def __runcmd(args, env=None):
+def runcmd(args, env=None):
+    """
+    Simple wrapper around :class:`subprocess.Popen`.
+
+    This is fairly similar to :func:`subprocess.call`, but makes certain
+    assumptions and has other tweaks useful to Vortex:
+
+    * Commands may only be run using an argument list. ``shell=True`` is
+      deliberately not supported to avoid potential security problems. The
+      `args` parameter must be a list.
+    * The environment is always completely cleared except for the ``PATH`` and
+      ``TERM`` environment variables. The `env` argument may be used to pass
+      additional variables to the command being called.
+    * The full command and any environment variables are sent to the logger at
+      DEBUG log level to help the user diagnose any issues.
+    * Standard input is always connected to ``/dev/null``.
+    * Standard output and standard error are connected to the same pipe.
+
+    This function returns a tuple consisting of (`returncode`, `output`), where
+    `returncode` is the command's return code and `output` is the combination
+    of the commands standard output and standard error.
+    """
     if env is None:
         env = dict()
 
@@ -142,7 +163,7 @@ def __apt_install(pkgs):
     ]
     args.extend(pkgs)
 
-    (ret, out) = __runcmd(args, env)
+    (ret, out) = runcmd(args, env)
 
     if ret != 0:
         raise EnvironmentException(
@@ -161,7 +182,7 @@ def __yum_install(pkgs):
     ]
     args.extend(pkgs)
 
-    (ret, out) = __runcmd(args)
+    (ret, out) = runcmd(args)
 
     if ret != 0:
         raise EnvironmentException(
