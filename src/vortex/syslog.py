@@ -14,6 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Provides a true syslog handler for the Python :mod:`logging` framework based on
+the Python :mod:`syslog` module.
+"""
 
 from __future__ import absolute_import, print_function, unicode_literals
 

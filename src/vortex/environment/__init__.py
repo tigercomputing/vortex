@@ -14,6 +14,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Provides cross-platform tools to validate and influence the environment that
+Vortex is running in.
+
+When this module is imported, various pre-requisite checks are run, such as
+checking that we are running on a new enough version of Python and that the
+underlying kernel is Linux.
+
+Further to this, various tools are provided to check for and install Python
+modules using distribution tooling (e.g. Apt or Yum).
+
+.. note:: Because this module is used to check for and install missing
+   dependencies, it cannot itself use any such dependent Python modules itself.
+"""
 
 from __future__ import absolute_import, print_function, unicode_literals
 

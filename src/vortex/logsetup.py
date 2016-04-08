@@ -14,6 +14,27 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Helper module used to configure the Python :mod:`logging` framework for Vortex.
+
+The following configuration options are *optional*:
+
+``[logging].console`` = ``INFO``
+   The log level for output that is sent to the console (e.g.
+   :data:`sys.stderr`). May be any of the pre-defined log levels from the
+   :mod:`logging` module or ``DISABLED`` meaning no logging is produced.
+
+``[logging].syslog`` = ``DISABLED``
+   The log level for output that is sent to syslog. May be any of the
+   pre-defined log levels from the :mod:`logging` module or ``DISABLED``
+   meaning no logging is produced.
+
+``[logging].syslog_facility`` = ``user``
+   The syslog facility used when sending messages to syslog. Must be one of the
+   facilities named in :data:`vortex.syslog.FACILITY_NAMES`. Note that the
+   syslog severity used corresponds to the priority of the message sent to the
+   :mod:`logging` framework.
+"""
 
 from __future__ import absolute_import, print_function, unicode_literals
 

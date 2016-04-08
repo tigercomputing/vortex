@@ -14,6 +14,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Subsystem used for abstracting how payload data is acquired from its source
+location.
+
+Examples include cloning a Git repository, or fetching and extracting a
+tarball from a web server.
+"""
 
 from __future__ import absolute_import, print_function, unicode_literals
 
