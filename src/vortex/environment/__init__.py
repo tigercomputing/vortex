@@ -32,13 +32,17 @@ modules using distribution tooling (e.g. Apt or Yum).
 from __future__ import absolute_import, print_function, unicode_literals
 
 import collections
+import logging
 import os
 import platform
 import subprocess
 import sys
 
-from vortex.compat import import_module
+from vortex.compat import import_module, shell_quote
+from vortex.utils import list_to_cmdline
 
+
+logger = logging.getLogger(__name__)
 
 _PY3 = sys.version_info[0] == 3
 _STRING_TYPES = (str,) if _PY3 else (basestring,)  # noqa
@@ -96,6 +100,15 @@ def __runcmd(args, env=None):
     # otherwise run with only the variables given.
     for var in ['PATH', 'TERM']:
         env.setdefault(var, os.environ.get(var))
+
+    # Let's only do the work to print a nice string if a user is likely to see
+    # it, otherwise it's just a waste of cycles.
+    if logger.isEnabledFor(logging.DEBUG):
+        debug_env = ' '.join(
+            "{var}={val}".format(var=shell_quote(x), val=shell_quote(env[x]))
+            for x in sorted(env))
+        logger.debug("Running: env -i {env} {cmd}".format(
+            env=debug_env, cmd=list_to_cmdline(args)))
 
     with open(os.devnull, 'r') as devnull:
         p = subprocess.Popen(
@@ -189,8 +202,12 @@ def install_package(package, name=None):
 
     # Hand over the package list to the package manager function
     if _dist_name in ['debian', 'ubuntu']:
+        logger.debug("Installing {pkg} using Apt to obtain {mod}".format(
+            pkg=', '.join(package), mod=name))
         __apt_install(package)
     elif _dist_name in ['centos', 'redhat']:
+        logger.debug("Installing {pkg} using Yum to obtain {mod}".format(
+            pkg=', '.join(package), mod=name))
         __yum_install(package)
     else:
         raise EnvironmentException(
@@ -215,6 +232,8 @@ def check_modules(install=False):
         try:
             import_module(module)
         except ImportError:
+            logger.debug("Detected missing required module: {mod}".format(
+                mod=module))
             missing.add(module)
 
     # Have we already got all the modules? Great!
@@ -229,7 +248,7 @@ def check_modules(install=False):
 
     # Now try to install the missing modules
     for module in missing:
-        # FIXME: provide feedback that we're doing something
+        logger.info("Installing Python module: {mod}".format(mod=module))
         install_package(_REQUIRE_MODULES[module], module)
 
     # Re-check all the modules
@@ -238,6 +257,8 @@ def check_modules(install=False):
         try:
             import_module(module)
         except ImportError:
+            logger.debug("Detected missing required module: {mod}".format(
+                mod=module))
             missing.add(module)
 
     if not missing:
