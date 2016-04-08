@@ -34,11 +34,16 @@ The following configuration options are *optional*:
    facilities named in :data:`vortex.syslog.FACILITY_NAMES`. Note that the
    syslog severity used corresponds to the priority of the message sent to the
    :mod:`logging` framework.
+
+Additionally, the default ``console`` log level may be set using the
+``VORTEX_CONSOLE`` environment variable. This is useful for debugging early
+stages of the Vortex runtime before the configuration file has been loaded.
 """
 
 from __future__ import absolute_import, print_function, unicode_literals
 
 import logging
+import os
 import vortex
 import vortex.syslog
 
@@ -110,6 +115,12 @@ def configure(cfg):
     # Take a copy of our defaults so we don't change the defaults when we pick
     # up the user configuration.
     config = dict(defaults)
+
+    # Check for VORTEX_CONSOLE environment variable
+    try:
+        config['console'] = os.environ['VORTEX_CONSOLE']
+    except KeyError:
+        pass
 
     # Extract any user configuration
     if cfg is not None:
