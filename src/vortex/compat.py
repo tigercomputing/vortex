@@ -27,6 +27,12 @@ Compatibility functions and wrappers.
    import. The ``package`` argument is ignored, and a
    :exc:`NotImplementedError` is raised if the ``name`` argument starts with a
    dot (``.``).
+
+.. py:function:: shell_quote(s)
+
+   On Python >= 3.3, this is a re-exported and renamed version of
+   :func:`shlex.quote`. Otherwise, this is a re-exported and renamed version of
+   :func:`pipes.quote`.
 """
 
 from __future__ import absolute_import, print_function, unicode_literals
@@ -45,3 +51,9 @@ except ImportError:
             raise NotImplementedError('Relative import not supported')
         __import__(name)
         return sys.modules[name]
+
+try:
+    from shlex import quote as shell_quote  # noqa
+except ImportError:
+    # Undocumented but exists in Python 2.6
+    from pipes import quote as shell_quote  # noqa
