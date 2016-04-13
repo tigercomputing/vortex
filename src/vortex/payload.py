@@ -23,6 +23,7 @@ import os.path
 
 from vortex.acquirer import Acquirer
 from vortex.config import cfg
+from vortex.deployment import Deployer
 from vortex.runtime import runtime
 from vortex.utils import cached_property
 
@@ -127,6 +128,13 @@ class Payload(object):
         # Obtain an acquirer instance for the configured acquisition method
         return Acquirer.factory(self.acquire_method, section)
 
+    @cached_property
+    def deployer(self):
+        """
+        :class:`vortex.deployment.Deployer` object used to deploy the payload.
+        """
+        return Deployer(self)
+
     @property
     def directory(self):
         """
@@ -166,3 +174,5 @@ class Payload(object):
         .. todo:: Make this actually do something.
         """
         logger.info("Deploying payload {name}".format(name=self.name))
+
+        self.deployer.deploy()
