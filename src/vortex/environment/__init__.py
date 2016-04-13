@@ -54,6 +54,12 @@ _REQUIRE_MODULES = {
         'redhat': 'python-six',
         'ubuntu': 'python3-six' if _PY3 else 'python-six',
     },
+    'yaml': {
+        'centos': 'PyYAML',
+        'debian': 'python3-yaml' if _PY3 else 'python-yaml',
+        'redhat': 'PyYAML',
+        'ubuntu': 'python3-yaml' if _PY3 else 'python-yaml',
+    },
 }
 
 
