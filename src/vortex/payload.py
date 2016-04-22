@@ -170,8 +170,6 @@ class Payload(object):
     def deploy(self):
         """
         Run the payload's deployment scripts in order to deploy it.
-
-        .. todo:: Make this actually do something.
         """
         logger.info("Deploying payload {name}".format(name=self.name))
 
