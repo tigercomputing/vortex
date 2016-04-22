@@ -44,8 +44,18 @@ class DeploymentError(Exception):
 
 class Deployer(object):
     """
-    FIXME
+    Read deployment configuration and run deployment steps.
+
+    The deployment configuration consists of YAML, JSON and executable files
+    placed within a ``.vortex`` directory within the payload directory. The
+    files are processed in lexical order and define the steps that need to be
+    performed to deploy the payload.
+
+    The `payload` argument should be an instance of
+    :class:`vortex.payload.Payload`.
     """
+    #: The name of the directory within the payload to read the deployment
+    #: configuration from.
     CFG_DIRNAME = '.vortex'
 
     def __init__(self, payload):
@@ -57,10 +67,14 @@ class Deployer(object):
     @cached_property
     def config_dir(self):
         """
-        FIXME
+        Path to the configuration directory within the acquired payload.
 
-        .. todo:: Should the payload configuration directory (e.g. ``.vortex``)
-            be configurable?
+        Returns the absolute path to the configuration directory in the
+        acquired payload. Raises a :exc:`DeploymentError` if the directory does
+        not exist.
+
+        .. todo:: Should the payload configuration directory
+            (:data:`CFG_DIRNAME`) be configurable?
         """
         path = os.path.join(self.payload.directory, self.CFG_DIRNAME)
 
@@ -71,53 +85,71 @@ class Deployer(object):
 
     @cached_property
     def __config_filenames(self):
+        # Returns a sorted list of filenames (not paths) in the config
+        # directory.
         for (_, _, filenames) in os.walk(self.config_dir):
             # Just return the sorted list of files in the config directory
             # itself, preventing iteration into child directories.
             return sorted(filenames)
 
     def _add_steps(self, config):
+        # Iterate the keys in config (a dict), creating a DeploymentHandler
+        # instance for each, then adding them to self.steps.
         for mod in config:
-            self.steps.append(DeploymentHandler.factory(mod, config[mod]))
+            step = DeploymentHandler.factory(mod, self, config[mod])
+            self.steps.append(step)
 
     def _add_json_steps(self, filename):
+        # Parse a JSON file, passing the result to self._add_steps()
         path = os.path.join(self.config_dir, filename)
 
-        if PY3:
-            open_kw = {
-                'encoding': 'utf-8',
-            }
-        else:
-            open_kw = {}
+        open_kw = {'encoding': 'utf-8'} if PY3 else {}
 
         with open(path, **open_kw) as fp:
             config = json.load(fp)
             self._add_steps(config)
 
     def _add_yaml_steps(self, filename):
+        # Parse a YAML file, passing each parsed document to self._add_steps()
         path = os.path.join(self.config_dir, filename)
 
-        if PY3:
-            open_kw = {
-                'encoding': 'utf-8',
-            }
-        else:
-            open_kw = {}
+        open_kw = {'encoding': 'utf-8'} if PY3 else {}
 
         with open(path, **open_kw) as fp:
             for config in yaml.safe_load_all(fp):
                 self._add_steps(config)
 
     def _add_exec_step(self, filename):
+        # Handle an executable file (a script) by synthesising an 'exec'
+        # handler that executes it.
         path = os.path.join(self.config_dir, filename)
 
         self._add_steps({
-            'exec': [path],
+            'exec': [[path]],
         })
 
     def configure(self):
         """
-        FIXME
+        Read the deployment configuration and build a sequence of steps.
+
+        This method:
+
+        #. Processes all JSON (``.json``), YAML (``.yaml``) and executable
+           files within the ``.vortex`` configuration directory:
+
+           * JSON files must be an "object" at the root level.
+           * YAML files may consist of a number of "documents", but they must
+             all be mappings.
+           * Executable files are added as ``exec`` steps so that they are
+             executed at that point in the sequence.
+           * If multiple deployment handlers are defined within a single
+             configuration file, the order in which they are executed is
+             *undefined*.
+
+        #. A :class:`DeploymentHandler` subclass is instantiated for each step.
+           The key from the mappings defined in the configuration files is used
+           to locate the subclass. The value is passed to the sub-class in
+           order to configure that particular step.
         """
         for f in self.__config_filenames:
             path = os.path.join(self.config_dir, f)
@@ -140,22 +172,48 @@ class Deployer(object):
 
     def deploy(self):
         """
-        FIXME
+        Execute the deployment steps defined in the configuration.
+
+        This method simply iterates over the steps configured using
+        :meth:`configure` and calls :meth:`DeploymentHandler.deploy` on each
+        step, in order.
         """
+        for step in self.steps:
+            step.deploy()
 
 
 @six.add_metaclass(abc.ABCMeta)
 class DeploymentHandler(object):
+    """
+    Abstract base class for deployment handler mechanisms.
+    """
     __registered = {}
 
     @classmethod
-    def factory(cls, module, config):
+    def factory(cls, module, deployer, config):
+        """
+        Find and configure a deployment handler.
+
+        Locates a registered sub-class of :class:`DeploymentHandler` by the
+        given `module` name, then returns an instance of it configured using
+        the given `config`.
+
+        The `module` argument is expected to be a Python module name containing
+        a sub-class of :class:`DeploymentHandler`. If the method name does not
+        contain any dots (``.``), the prefix ``vortex.deployment.`` is
+        prepended. For example, the module name ``exec`` causes the
+        ``vortex.deployment.exec`` module to be loaded.
+
+        The located class is then instantiated with the given `deployer` and
+        `config` passed to the constructor as its arguments. The resulting
+        object is returned.
+        """
         # Prepend package prefix if required
         if '.' not in module:
             module = 'vortex.deployment.' + module
 
         klass = cls.__locate(module)
-        handler = klass(config)
+        handler = klass(deployer, config)
 
         return handler
 
@@ -182,6 +240,23 @@ class DeploymentHandler(object):
 
     @classmethod
     def register(cls, handler):
+        """
+        Function used to register a new :class:`DeploymentHandler` sub-class.
+
+        This is expected to be used as a decorator on classes implementing a
+        deployment helper. For example::
+
+            @DeploymentHandler.register
+            class MyHandler(DeploymentHandler):
+                ...
+
+        DeploymentHandler sub-classes are registered using their containing
+        module name as a lookup key; the class name is ignored. The module name
+        alone is used to look up sub-classes in the :meth:`factory` method.
+
+        .. note:: Only one DeploymentHandler sub-class may be registered per
+            module.
+        """
         module = handler.__module__
 
         if module in cls.__registered:
@@ -192,14 +267,38 @@ class DeploymentHandler(object):
 
         return handler
 
-    def __init__(self, config):
+    def __init__(self, deployer, config):
         super(DeploymentHandler, self).__init__()
+        self.deployer = deployer
+        self.payload = deployer.payload
         self.configure(config)
 
     @abc.abstractmethod
     def configure(self, config):
-        pass
+        """
+        Configure this deployment handler based on settings from the deployment
+        configuration.
+
+        Additionally, the :data:`deployer` (:class:`Deployer` instance) and
+        :data:`payload` (:class:`vortex.payload.Payload` instance) may be
+        referenced in this method.
+
+        .. note:: This is an *abstract method* and **must** be implemented by
+            sub-classes.
+        """
 
     @abc.abstractmethod
     def deploy(self):
-        pass
+        """
+        Perform the configured deployment step.
+
+        Sub-classes should implement the deployment step in this method. They
+        should use the configuration obtained in :meth:`configure`.
+
+        Additionally, the :data:`deployer` (:class:`Deployer` instance) and
+        :data:`payload` (:class:`vortex.payload.Payload` instance) may be
+        referenced in this method.
+
+        .. note:: This is an *abstract method* and **must** be implemented by
+            sub-classes.
+        """
