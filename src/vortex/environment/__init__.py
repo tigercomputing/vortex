@@ -195,7 +195,7 @@ def __yum_install(pkgs):
             "yum install failed: {ret}".format(ret=ret), out)
 
 
-def install_package(package, name=None):
+def install_package(package):
     """
     Helper to install a package on the system.
 
@@ -204,24 +204,21 @@ def install_package(package, name=None):
 
     The ``package`` argument may be a string, list or dictionary. When it is a
     string, the value is passed to the system packaging tools as-is. When it is
-    a string, each element in the list is assumed to be a package name and the
+    a list, each element in the list is assumed to be a package name and the
     tools are asked to install all the listed packages. When the value is a
     dictionary, the keys are expected to be short distribution names (as per
     :func:`platform.linux_distribution` with ``full_distribution_name=0``):
     when matched against the running system, the value of the entry (which may
     be a dictionary or list) is passed to the packaging tools.
     """
-    if name is None:
-        name = str(package)
-
     if isinstance(package, collections.Mapping):
         # Extract the package name(s) for this distribution
         try:
             package = package[_dist_name]
         except KeyError:
             raise EnvironmentException(
-                "Don't know how to install {pkg} on {dist}".format(
-                    pkg=name, dist=_dist_name))
+                "No package information for distribution: {dist}".format(
+                    dist=_dist_name))
 
     if isinstance(package, _STRING_TYPES):
         # Turn a single string into a list
@@ -229,12 +226,12 @@ def install_package(package, name=None):
 
     # Hand over the package list to the package manager function
     if _dist_name in ['debian', 'ubuntu']:
-        logger.debug("Installing {pkg} using Apt to obtain {mod}".format(
-            pkg=', '.join(package), mod=name))
+        logger.debug("Using Apt to install: {pkg}".format(
+            pkg=', '.join(package)))
         __apt_install(package)
     elif _dist_name in ['centos', 'redhat']:
-        logger.debug("Installing {pkg} using Yum to obtain {mod}".format(
-            pkg=', '.join(package), mod=name))
+        logger.debug("Using Yum to install: {pkg}".format(
+            pkg=', '.join(package)))
         __yum_install(package)
     else:
         raise EnvironmentException(
@@ -276,7 +273,7 @@ def check_modules(install=False):
     # Now try to install the missing modules
     for module in missing:
         logger.info("Installing Python module: {mod}".format(mod=module))
-        install_package(_REQUIRE_MODULES[module], module)
+        install_package(_REQUIRE_MODULES[module])
 
     # Re-check all the modules
     missing.clear()
