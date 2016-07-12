@@ -69,7 +69,7 @@ class ExecHandler(DeploymentHandler):
     arguments to the command.
 
     Commands are run with an empty environment aside from the ``PATH`` variable
-    (which is inherited) and the ``VORTEX_ENVRIONMENT`` variable, which
+    (which is inherited) and the ``VORTEX_ENVIRONMENT`` variable, which
     corresponds to the ``environment`` configuration option given for the
     payload in the ``vortex.ini`` configuration.
 
@@ -91,7 +91,7 @@ class ExecHandler(DeploymentHandler):
     def _runcmd(self, args):
         env = {
             'PATH': os.environ.get('PATH'),
-            'VORTEX_ENVRIONMENT': self.payload.environment,
+            'VORTEX_ENVIRONMENT': self.payload.environment,
         }
 
         if str(args) == args:
