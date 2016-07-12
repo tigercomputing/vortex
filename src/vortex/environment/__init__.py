@@ -126,7 +126,10 @@ def runcmd(args, env=None, cwd=None):
     # Copy in some basic environment variables from our environment, but
     # otherwise run with only the variables given.
     for var in ['PATH', 'TERM']:
-        env.setdefault(var, os.environ.get(var))
+        try:
+            env.setdefault(var, os.environ[var])
+        except KeyError:
+            pass
 
     # Let's only do the work to print a nice string if a user is likely to see
     # it, otherwise it's just a waste of cycles.
