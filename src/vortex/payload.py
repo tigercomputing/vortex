@@ -189,18 +189,40 @@ class Payload(object):
         holding :attr:`directory`.
         """
         logger.info("Acquiring payload {name}".format(name=self.name))
+        self.call_hooks('pre-acquire', 'payload', self.name)
 
-        self.acquirer.acquire_into(self.directory)
+        try:
+            self.acquirer.acquire_into(self.directory)
+        except:
+            logger.critical(
+                "Failed to acquire payload {name}".format(name=self.name))
+            self.call_hooks('post-acquire', 'failed-payload', self.name)
+            raise
+
         self.acquired = True
+
+        logger.info("Acquired payload {name}".format(name=self.name))
+        self.call_hooks('post-acquire', 'payload', self.name)
 
     def deploy(self):
         """
         Run the payload's deployment scripts in order to deploy it.
         """
         logger.info("Deploying payload {name}".format(name=self.name))
+        self.call_hooks('pre-deploy', 'payload', self.name)
 
-        self.deployer.deploy()
+        try:
+            self.deployer.deploy()
+        except:
+            logger.critical(
+                "Failed to deploy payload {name}".format(name=self.name))
+            self.call_hooks('post-deploy', 'failed-payload', self.name)
+            raise
+
         self.deployed = True
+
+        logger.info("Deployed pauload {name}".format(name=self.name))
+        self.call_hooks('post-deploy', 'payload', self.name)
 
     def _call_hook(self, hook, method, *args):
         """

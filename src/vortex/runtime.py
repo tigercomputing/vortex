@@ -20,6 +20,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import atexit
 import logging
 import shutil
+import sys
 import tempfile
 import vortex.logsetup
 
@@ -79,14 +80,37 @@ class Runtime(object):
         # Obtain all configured payloads
         payloads = Payload.configured_payloads()
 
+        # No point calling hooks because no payloads have yet been acquired
+        logger.info("Payload acquisition commencing.")
+        # Payload.call_hooks('pre-acquire', 'payloads')
+
         # Acquire all the payload data first, then deploy them all as a second
         # step. This means we don't deploy anything if any of the payloads fail
         # to be acquired.
-        for payload in payloads:
-            payload.acquire()
+        try:
+            for payload in payloads:
+                payload.acquire()
+        except:
+            logger.critical("Payload acquisition failed. Aborting.")
+            Payload.call_hooks('post-acquire', 'failed-payloads')
+            sys.exit(1)
 
-        for payload in payloads:
-            payload.deploy()
+        logger.info("Payload acquisition complete.")
+        Payload.call_hooks('post-acquire', 'payloads')
+
+        logger.info("Payload deployment commencing.")
+        Payload.call_hooks('pre-deploy', 'payloads')
+
+        try:
+            for payload in payloads:
+                payload.deploy()
+        except:
+            logger.critical("Payload deployment failed. Aborting.")
+            Payload.call_hooks('post-deploy', 'failed-payloads')
+            sys.exit(1)
+
+        logger.info("Payload deployment complete.")
+        Payload.call_hooks('post-deploy', 'payloads')
 
 #: Singleton instance of the Vortex Runtime class
 runtime = Runtime()
