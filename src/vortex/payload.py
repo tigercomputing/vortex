@@ -104,6 +104,8 @@ class Payload(object):
     def __init__(self, name):
         super(Payload, self).__init__()
         self.name = name
+        self.acquired = False
+        self.deployed = False
         self._configure()
 
     def _configure(self):
@@ -166,6 +168,7 @@ class Payload(object):
         logger.info("Acquiring payload {name}".format(name=self.name))
 
         self.acquirer.acquire_into(self.directory)
+        self.acquired = True
 
     def deploy(self):
         """
@@ -174,3 +177,4 @@ class Payload(object):
         logger.info("Deploying payload {name}".format(name=self.name))
 
         self.deployer.deploy()
+        self.deployed = True
