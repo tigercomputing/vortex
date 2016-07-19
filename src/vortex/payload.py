@@ -24,6 +24,7 @@ import os.path
 from vortex.acquirer import Acquirer
 from vortex.config import cfg
 from vortex.deployment import Deployer
+from vortex.environment import runcmd
 from vortex.runtime import runtime
 from vortex.utils import cached_property
 
@@ -100,6 +101,28 @@ class Payload(object):
 
         cls.__configured_payloads = payloads
         return cls.__configured_payloads
+
+    @classmethod
+    def call_hooks(cls, hook, method, *args):
+        """
+        Invokes all available hook scripts.
+
+        Looks for hook scripts of a given name (`hook`) in all configured,
+        successfully acquired, payloads then invokes them with the given method
+        and any other optional arguments.
+
+        Returns a dictionary of payload names to execution results (as produced
+        by :func:`vortex.environment.runcmd`.
+        """
+        payloads = cls.configured_payloads()
+        results = {}
+
+        for payload in payloads:
+            result = payload._call_hook(hook, method, *args)
+            if result is not None:
+                results[payload.name] = result
+
+        return results
 
     def __init__(self, name):
         super(Payload, self).__init__()
@@ -178,3 +201,34 @@ class Payload(object):
 
         self.deployer.deploy()
         self.deployed = True
+
+    def _call_hook(self, hook, method, *args):
+        """
+        Call a hook script resisiding within this payload.
+
+        This method should not be used by consumers within Vortex: hook scripts
+        in all payloads should be called for all hookable events, so only
+        :meth:`call_hooks` should be used.
+        """
+        # Don't call hooks if we haven't been successfully acquired
+        if not self.acquired:
+            return None
+
+        hook = os.path.join(
+            self.directory, Deployer.CFG_DIRNAME, 'hooks', hook)
+
+        # Skip unless the hook is executable (and exists, etc...)
+        if not os.access(hook, os.R_OK | os.X_OK):
+            return None
+
+        script_args = [hook, method]
+        script_args.extend(args)
+
+        env = {
+            'VORTEX_ENVIRONMENT': self.environment,
+        }
+
+        try:
+            return runcmd(script_args, env=env, cwd=self.directory)
+        except:
+            return None
