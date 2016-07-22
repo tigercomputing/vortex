@@ -221,7 +221,7 @@ class Payload(object):
 
         self.deployed = True
 
-        logger.info("Deployed pauload {name}".format(name=self.name))
+        logger.info("Deployed payload {name}".format(name=self.name))
         self.call_hooks('post-deploy', 'payload', self.name)
 
     def _call_hook(self, hook, method, *args):
