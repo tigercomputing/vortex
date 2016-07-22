@@ -67,7 +67,7 @@ consoleHandler = logging.StreamHandler()
 consoleHandler.setFormatter(formatter)
 
 #: Log handler for sending logs to syslog
-syslogHandler = vortex.syslog.SyslogHandler()
+syslogHandler = vortex.syslog.SyslogHandler(ident='vortex')
 syslogHandler.setFormatter(formatter)
 
 
